@@ -1,76 +1,59 @@
 # HelpDesk API
 
-## Sobre o projeto
-
-O HelpDesk é uma API REST para registrar e consultar solicitações de suporte.
-Ela centraliza informações como título, descrição, categoria, prioridade e
-situação dos tickets, facilitando o acompanhamento de demandas de atendimento.
+API REST para registrar e consultar solicitações de suporte. O projeto centraliza dados como título, descrição, categoria, prioridade e situação dos tickets.
 
 ## Tecnologias
-
 - Java 27
 - Spring Boot 4.1.2
-- Maven, para dependências e build
-- Spring Web MVC, para a API REST
-- Spring Data JPA, para persistência
-- H2, banco de dados em tempo de execução
-- JUnit 5 e Spring Boot Test, para testes
+- Maven
+- Spring Web MVC
+- Spring Data JPA
+- H2
+- Jakarta Bean Validation
+- JUnit 5 e Spring Boot Test
 
-## Funcionalidades
-
+## Funcionalidades implementadas
 - Criar tickets com título, descrição, categoria e prioridade.
-- Listar todos os tickets e consultar um ticket pelo ID.
-- Validar os campos obrigatórios e tratar erros HTTP, incluindo `400 Bad Request`
-  e `404 Not Found`.
-- Representar e validar transições de situação do ticket no domínio: aberto,
-  em atendimento, aguardando usuário, resolvido e fechado.
+- Listar todos os tickets.
+- Consultar um ticket pelo ID.
+- Validar campos obrigatórios na entrada da API.
+- Tratar erros de validação, JSON inválido, parâmetros incompatíveis e tickets não encontrados.
+- Aplicar regras de transição de situação no domínio: `OPEN`, `IN_PROGRESS`, `WAITING_FOR_USER`, `RESOLVED` e `CLOSED`.
 
-Atualmente, a API HTTP expõe criação, listagem e consulta. As transições de
-situação existem nas regras de domínio, mas ainda não possuem endpoints próprios.
+As transições de situação estão implementadas na entidade, mas ainda não são expostas por endpoints próprios.
 
-## Arquitetura
-
-O código é organizado por responsabilidade nos seguintes pacotes:
-
-- `controller`: recebe as requisições HTTP e define as rotas da API.
-- `service`: executa os casos de uso e coordena as operações sobre tickets.
-- `domain`: contém a entidade `Ticket`, as prioridades, situações e regras de
-  transição de estado.
-- `dtos`: define os formatos de entrada e saída da API, separando o contrato HTTP
-  da entidade de persistência.
-- `repository`: fornece acesso aos tickets persistidos por meio do Spring Data
-  JPA.
-- `exception`: contém exceções da aplicação e o tratamento centralizado das
-  respostas de erro.
+## Organização do código
+- `controller`: endpoints HTTP.
+- `service`: casos de uso e coordenação das operações.
+- `domain`: entidade, enums e regras de negócio.
+- `dtos`: contratos de entrada e saída.
+- `repository`: acesso a dados com Spring Data JPA.
+- `exception`: exceções e tratamento centralizado de erros.
 
 ## Como executar
+Requer Java 27. Na raiz do projeto:
 
-Requer Java 27. Na pasta do projeto, inicie a aplicação com Maven Wrapper:
-
+Linux/macOS:
 ```bash
 ./mvnw spring-boot:run
 ```
 
-No Windows PowerShell:
-
+Windows PowerShell:
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-A API fica disponível em `http://localhost:8080`. O H2 é configurado como banco
-de dados em tempo de execução.
+A API fica disponível em `http://localhost:8080`. O banco H2 está configurado para execução local.
 
 ## Endpoints
-
-| Método | Rota | Descrição | Resposta de sucesso |
+| Método | Rota | Descrição | Sucesso |
 |---|---|---|---|
 | `POST` | `/tickets` | Cria um ticket | `201 Created` |
-| `GET` | `/tickets` | Lista os tickets | `200 OK` |
-| `GET` | `/tickets/{id}` | Consulta um ticket pelo ID | `200 OK` |
+| `GET` | `/tickets` | Lista tickets | `200 OK` |
+| `GET` | `/tickets/{id}` | Consulta por ID | `200 OK` |
 
-### Criar ticket
-
-Exemplo de requisição para `POST /tickets`:
+### Exemplo de criação
+Requisição `POST /tickets`:
 
 ```json
 {
@@ -81,48 +64,26 @@ Exemplo de requisição para `POST /tickets`:
 }
 ```
 
-Os campos são obrigatórios. As prioridades aceitas são `LOW`, `MEDIUM`, `HIGH` e
-`CRITICAL`. A resposta `201 Created` contém o ticket criado e o cabeçalho
-`Location` com o endereço do recurso. `status` e `createdAt` são definidos pelo
-servidor.
-
-Exemplo de resposta:
-
-```json
-{
-  "id": 1,
-  "title": "Erro de login",
-  "description": "Não consigo acessar minha conta",
-  "category": "Acesso",
-  "priority": "HIGH",
-  "status": "OPEN",
-  "createdAt": "2026-11-06T19:00:00"
-}
-```
-
-`GET /tickets` retorna uma lista com os tickets. `GET /tickets/1` retorna o
-ticket correspondente ao ID informado.
-
-### Erros HTTP
-
-- `400 Bad Request`: JSON inválido, prioridade desconhecida ou falha de
-  validação. Erros de validação incluem os campos inválidos.
-- `404 Not Found`: ticket inexistente para o ID solicitado.
-- `500 Internal Server Error`: erro inesperado no servidor.
+Prioridades aceitas: `LOW`, `MEDIUM`, `HIGH` e `CRITICAL`. A situação e a data de criação são definidas pela aplicação.
 
 ## Testes
+Execute:
 
-Execute toda a suíte de testes a partir da pasta do projeto:
-
+Linux/macOS:
 ```bash
 ./mvnw test
 ```
 
-No Windows PowerShell:
-
+Windows PowerShell:
 ```powershell
 .\mvnw.cmd test
 ```
 
-Os testes incluem as regras de transição de estado da entidade e testes de
-integração da API HTTP com MockMvc e o banco H2.
+A suíte de testes inspecionada cobre as regras de transição de estado do domínio. Próximo passo: ampliar a cobertura com testes de integração HTTP para criação, listagem, consulta e respostas de erro.
+
+## Próximas evoluções
+- Endpoints para transição de status.
+- Testes de integração dos endpoints.
+- Banco PostgreSQL.
+- Documentação OpenAPI/Swagger.
+- Autenticação e autorização.
